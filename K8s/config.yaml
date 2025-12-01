@@ -4,4 +4,5 @@ metadata:
   name: config
 data:
   MODEL_PATH: "/app/models/trained_model.pkl"
+  PREPROCESSOR_PATH: "/app/src/preprocessor.pkl"
   LOG_LEVEL: "INFO"
