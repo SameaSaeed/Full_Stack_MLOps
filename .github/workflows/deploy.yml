@@ -2,8 +2,7 @@ name: Deploy to Minikube
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
 
 jobs:
   deploy:
@@ -13,45 +12,42 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v4
 
-    - name: Set up Minikube
+    - name: Start Minikube
       uses: manusa/actions-setup-minikube@v2.13.0
       with:
-        minikube version: 'v1.36.0'  # Specify the Minikube version
-        kubernetes version: 'v1.32.0'  # Specify the Kubernetes version
-        github token: ${{ secrets.GITHUB_TOKEN }}
-        driver: docker  # Use the 'docker' driver
+        minikube-version: 'v1.36.0'
+        kubernetes-version: 'v1.32.0'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        driver: docker
 
     - name: Use Minikube Docker daemon
-      run: |
-        eval $(minikube -p minikube docker-env)
+      run: eval $(minikube -p minikube docker-env)
 
     - name: Build Docker image inside Minikube
-      run: |
-        docker build -t model-api:latest .
-    
+      run: docker build -t model-api:latest .
+
     - name: Load image into Minikube
       run: |
         minikube image load model-api:latest
         minikube image ls
 
-    - name: Apply K8s manifests
+    - name: Apply Kubernetes manifests
       run: |
         kubectl apply -f K8s/config.yaml
         kubectl apply -f K8s/serviceaccount.yaml
         kubectl apply -f K8s/deployment.yaml
         kubectl apply -f K8s/service.yaml
 
-    - name: Check Pod Statuses (Debugging Step)
+    - name: Debug: Pod and Events
       run: |
+        echo "--- PODS ---"
         kubectl get pods -l app=model-api
+        echo "--- DEPLOYMENT ---"
         kubectl describe deployment model-api
+        echo "--- WARNINGS ---"
         kubectl get events --field-selector type=Warning
+        echo "--- ALL EVENTS ---"
         kubectl get events --all-namespaces --sort-by='.metadata.creationTimestamp'
-        NODE=$(kubectl get pods -l app=model-api -o jsonpath='{.items[0].spec.nodeName}')
-        kubectl describe node $NODE
-        kubectl top nodes
-
 
     - name: Wait for rollout to finish
-      run: |
-        kubectl rollout status deployment/model-api --timeout=300s
+      run: kubectl rollout status deployment/model-api --timeout=300s
