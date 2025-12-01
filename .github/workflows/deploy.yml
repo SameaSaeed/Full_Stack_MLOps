@@ -23,8 +23,61 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov
 
-      - name: Run tests
+      - name: Run unit & integration tests
         env:
           PYTHONPATH: ./src
         run: |
-          python -m pytest tests/test_api_integration.py --maxfail=1 --disable-warnings -q --cov=src
+          python -m pytest tests/ --maxfail=1 --disable-warnings -q --cov=src
+
+  deploy:
+    runs-on: ubuntu-24.04
+    needs: test   # ensures deploy runs only if tests pass
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Minikube
+        uses: manusa/actions-setup-minikube@v2.13.0
+        with:
+          minikube version: 'v1.36.0'
+          kubernetes version: 'v1.32.0'
+          github token: ${{ secrets.GITHUB_TOKEN }}
+          driver: docker
+
+      - name: Use Minikube Docker daemon
+        run: |
+          eval $(minikube -p minikube docker-env)
+
+      - name: Build Docker image inside Minikube
+        run: |
+          docker build -t model-api:latest .
+
+      - name: Load image into Minikube
+        run: |
+          minikube image load model-api:latest
+          minikube image ls
+
+      - name: Apply ConfigMap
+        run: |
+          kubectl apply -f K8s/config.yaml
+
+      - name: Apply ServiceAccount (optional)
+        run: |
+          kubectl apply -f K8s/serviceaccount.yaml
+
+      - name: Apply Deployment
+        run: |
+          kubectl apply -f K8s/deployment.yaml
+
+      - name: Apply Service
+        run: |
+          kubectl apply -f K8s/service.yaml
+
+      - name: Wait for rollout to finish
+        run: |
+          kubectl rollout status deployment/model-api --timeout=300s
+
+      - name: Check Pod Statuses (Debugging Step)
+        run: |
+          kubectl get pods -l app=model-api
+          kubectl describe deployment model-api
