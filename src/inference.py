@@ -2,10 +2,14 @@ import joblib
 import pandas as pd
 from datetime import datetime
 from schemas import HousePredictionRequest, PredictionResponse
+from pathlib import Path
 
-# Load model and preprocessor
-MODEL_PATH = r"E:\FullStack_MLOps_Project\models\trained_model.pkl"
-PREPROCESSOR_PATH = r"E:\FullStack_MLOps_Project\src\preprocessor.pkl"
+# Base directory of your project (two levels up from src/inference.py)
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Relative paths
+MODEL_PATH = BASE_DIR / "models" / "trained_model.pkl"
+PREPROCESSOR_PATH = BASE_DIR / "src" / "preprocessor.pkl"
 
 try:
     model = joblib.load(MODEL_PATH)
