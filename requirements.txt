@@ -6,4 +6,4 @@ pydantic==1.10.15
 scikit-learn==1.6.1
 scipy==1.11.1
 xgboost==1.7.6
-
+dask[complete]
