@@ -1,7 +1,14 @@
 import pytest
 from fastapi.testclient import TestClient
-from src.app import app
-from src.schemas import HousePredictionRequest
+
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
+
+from app import app
+from app import app
+from schemas import HousePredictionRequest
 
 client = TestClient(app)
 
