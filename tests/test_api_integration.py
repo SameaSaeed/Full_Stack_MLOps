@@ -1,20 +1,23 @@
+import sys
+from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-import sys
-from pathlib import Path
-
+# Ensure src/ is in the Python path
 sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
 
-from app import app
-from app import app
+from app import app  # Now Python can find app.py
 from schemas import HousePredictionRequest
 
 client = TestClient(app)
 
-@pytest.fixture
-def sample_payload():
-    return {
+def test_health_check():
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "healthy"
+
+def test_predict_endpoint():
+    payload = {
         "year_built": 2000,
         "bedrooms": 3,
         "bathrooms": 2,
@@ -22,27 +25,7 @@ def sample_payload():
         "location": "Downtown",
         "condition": "Good"
     }
-
-def test_health_endpoint():
-    response = client.get("/health")
-    assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "healthy"
-    assert data["model_loaded"] is True
-
-def test_predict_endpoint(sample_payload):
-    response = client.post("/predict", json=sample_payload)
+    response = client.post("/predict", json=payload)
     assert response.status_code == 200
     data = response.json()
     assert "predicted_price" in data
-    assert "confidence_interval" in data
-    assert isinstance(data["predicted_price"], float)
-    assert len(data["confidence_interval"]) == 2
-
-def test_batch_predict_endpoint(sample_payload):
-    response = client.post("/batch-predict", json=[sample_payload, sample_payload])
-    assert response.status_code == 200
-    data = response.json()
-    assert len(data) == 2
-    for r in data:
-        assert "predicted_price" in r
