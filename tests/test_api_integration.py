@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 # Ensure src/ is in the Python path
 sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
 
-from app import app  # Now Python can find app.py
+from src.app import app import app  # Now Python can find app.py
 from schemas import HousePredictionRequest
 
 client = TestClient(app)
