@@ -28,17 +28,11 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov
 
-      - name: Run unit tests
+      - name: Run tests
         env:
           PYTHONPATH: ./src
         run: |
-          python -m pytest tests/unit --maxfail=1 --disable-warnings -q --cov=src
-
-      - name: Run integration tests
-        env:
-          PYTHONPATH: ./src
-        run: |
-          python -m pytest tests/integration --maxfail=1 --disable-warnings -q --cov=src
+          python -m pytest tests/ --maxfail=1 --disable-warnings -q --cov=src
 
   deploy-minikube:
     name: Deploy to Minikube
